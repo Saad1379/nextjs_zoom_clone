@@ -1,13 +1,18 @@
+/* eslint-disable camelcase */
 "use client";
-import React, { useState } from "react";
-import HomeCard from "./HomeCard";
+
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+
+import HomeCard from "./HomeCard";
+import MeetingModal from "./MeetingModal";
 import { Call, useStreamVideoClient } from "@stream-io/video-react-sdk";
 import { useUser } from "@clerk/nextjs";
-import { toast } from "./ui/use-toast";
-import MeetingModal from "./MeetingModal";
+import Loader from "./Loader";
 import { Textarea } from "./ui/textarea";
 import ReactDatePicker from "react-datepicker";
+import { useToast } from "./ui/use-toast";
+import { Input } from "./ui/input";
 
 const initialValues = {
   dateTime: new Date(),
@@ -24,6 +29,7 @@ const MeetingTypeList = () => {
   const [callDetail, setCallDetail] = useState<Call>();
   const client = useStreamVideoClient();
   const { user } = useUser();
+  const { toast } = useToast();
 
   const createMeeting = async () => {
     if (!client || !user) return;
@@ -59,6 +65,8 @@ const MeetingTypeList = () => {
     }
   };
 
+  if (!client || !user) return <Loader />;
+
   const meetingLink = `${process.env.NEXT_PUBLIC_BASE_URL}/meeting/${callDetail?.id}`;
 
   return (
@@ -90,6 +98,7 @@ const MeetingTypeList = () => {
         className="bg-yellow-1"
         handleClick={() => router.push("/recordings")}
       />
+
       {!callDetail ? (
         <MeetingModal
           isOpen={meetingState === "isScheduleMeeting"}
@@ -139,6 +148,22 @@ const MeetingTypeList = () => {
           buttonText="Copy Meeting Link"
         />
       )}
+
+      <MeetingModal
+        isOpen={meetingState === "isJoiningMeeting"}
+        onClose={() => setMeetingState(undefined)}
+        title="Type the link here"
+        className="text-center"
+        buttonText="Join Meeting"
+        handleClick={() => router.push(values.link)}
+      >
+        <Input
+          placeholder="Meeting link"
+          onChange={(e) => setValues({ ...values, link: e.target.value })}
+          className="border-none bg-dark-3 focus-visible:ring-0 focus-visible:ring-offset-0"
+        />
+      </MeetingModal>
+
       <MeetingModal
         isOpen={meetingState === "isInstantMeeting"}
         onClose={() => setMeetingState(undefined)}
